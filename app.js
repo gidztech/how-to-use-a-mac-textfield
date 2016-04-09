@@ -6,7 +6,7 @@
 
   initQuestions();
 
-  if (questions.length > 0) {
+  if (questions.length) {
     renderQuestion(0, prepareDOM);
 
     $("#nextQuestion").on("click", function() {
@@ -17,7 +17,7 @@
   // set up events
   function prepareDOM(question) {
     var textField = $('#textField').get(0);
-    textField.selectionStart = question._defaultCursorPosition;
+    textField.selectionStart = question.defaultCursorPosition;
     textField.focus();
 
     // bind the main key events where a cursor change may occur
@@ -27,15 +27,29 @@
   }
 
   function initQuestions() {
-    questions.push(new Question("Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"", "This is some sample text", 10, 8));
-    questions.push(new Question("Using Cmd + Left, move the cursor to the start of the line", "This is some more sample text", 14, 0));
+    questions.push(new Question(
+      {
+        title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
+        sampleText: "This is some sample text",
+        defaultCursorPosition: 10,
+        correctCursorPosition: 8
+     }));
+
+     questions.push(new Question(
+       {
+         title: "Using Cmd + Left, move the cursor to the start of the line",
+         sampleText: "This is some more sample text",
+         defaultCursorPosition: 14,
+         correctCursorPosition: 0
+      }));
+
   }
 
-  function Question(title, sampleText, defaultCursorPosition, correctCursorPosition) {
-    this._title = title;
-    this._sampleText = sampleText;
-    this._defaultCursorPosition = defaultCursorPosition;
-    this._correctPositionCursorPosition = correctCursorPosition;
+  function Question(q) {
+    this.title = q.title;
+    this.sampleText = q.sampleText;
+    this.defaultCursorPosition = q.defaultCursorPosition;
+    this.correctPositionCursorPosition = q.correctCursorPosition;
   }
 
   function checkCursorPosition(textField, question) {
@@ -49,11 +63,8 @@
       console.log(selectionEnd);
     }
 
-    if (selectionStart == question._correctPositionCursorPosition && selectionEnd == question._correctPositionCursorPosition) {
-      removeClassIfExists(correct);
-    } else {
-      addClassIfNotExists(correct);
-    }
+    var show = (selectionStart == question.correctPositionCursorPosition && selectionEnd == question.correctPositionCursorPosition);
+    correct.toggleClass("hidden", !show);
   }
 
   function renderQuestion(id, callback) {
@@ -64,24 +75,11 @@
 
     var rendered = Mustache.render(template, {
       questionNo: (id+1),
-      question: question._title,
-      sampleText: question._sampleText
+      question: question.title,
+      sampleText: question.sampleText
     });
 
     $('#questions').html(rendered);
     callback(question);
   }
-
-  function removeClassIfExists(jObject) {
-    if (jObject.hasClass("hidden")) {
-      jObject.removeClass("hidden");
-    }
-  }
-
-  function addClassIfNotExists(jObject) {
-    if (!jObject.hasClass("hidden")) {
-      jObject.addClass("hidden");
-    }
-  }
-
 })();
