@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>How to use a Mac Text Field</title>
+<link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+  <script type="text/javascript" src="jquery-1.12.3.min.js"></script>
+  <script type="text/javascript" src="node_modules/mustache/mustache.min.js"></script>
+
+  <div id="questions">
+  </div>
+
+  <button id="nextQuestion" type="button">Next Question</button>
+
+  <script id="template" type="text/template">
+    <div>
+      <div class="question">
+        {{questionNo}}. {{question}}
+      </div>
+      <div class="entry">
+        <input type="text" id="textField" value="{{sampleText}}" autofocus="true" class="text-field" />
+        <span id="correct" class="hidden">Correct</span>
+      </div>
+    </div>
+  </script>
+
+  <script type="text/javascript" src="app.js"></script>
+
+</body>
+</html>
