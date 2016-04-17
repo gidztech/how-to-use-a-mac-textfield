@@ -108,6 +108,7 @@
 
   // QuestionView extends BaseView
   QuestionView.prototype = Object.create(BaseView.prototype);
+  QuestionView.prototype.constructor = QuestionView;
   QuestionView.prototype.template = "questionTemplate";
 
   // QuestionView implementation of afterRender
@@ -122,21 +123,21 @@
 
     var that = this;
 
-    // bind the main key events where a cursor change may occur
+    // Bind the main key events where a cursor change may occur
     this.ui.textField.bind("keyup click focus", function() {
       var currentQuestion = questions[currentQuestionIndex];
 
-      if (currentQuestion.constructor == CursorQuestion) {
+      // Could also use 'instanceof' since we have a constructor
+      if (CursorQuestion.prototype.isPrototypeOf(currentQuestion)) {
         that.checkCursorPosition();
       }
-      if (currentQuestion.constructor == SelectionQuestion) {
+      if (SelectionQuestion.prototype.isPrototypeOf(currentQuestion)) {
         that.checkCurrentSelection();
       }
     });
   };
 
   QuestionView.prototype.checkCurrentSelection = function() {
-    console.log("Test");
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
