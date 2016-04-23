@@ -34,7 +34,14 @@
   }
 
   function SelectionQuestion(q) {
-    this.selectedRange = q.selectedRange;
+    this.correctSelectedRange = q.correctSelectedRange;
+
+    // Call the super constructor (BaseQuestion) using the SelectionQuestion context as "this"
+    BaseQuestion.call(this, q);
+  }
+
+  function ContentQuestion(q) {
+    this.correctValue = q.correctValue;
 
     // Call the super constructor (BaseQuestion) using the SelectionQuestion context as "this"
     BaseQuestion.call(this, q);
@@ -46,7 +53,9 @@
   // SelectionQuestion extends BaseQuestion
   SelectionQuestion.prototype = Object.create(BaseQuestion.prototype);
   SelectionQuestion.prototype.constructor = SelectionQuestion;
-
+  // ContentQuestion extends BaseQuestion
+  ContentQuestion.prototype = Object.create(BaseQuestion.prototype);
+  ContentQuestion.prototype.constructor = ContentQuestion;
 
   function initQuestions() {
     questions.push(new CursorQuestion(
@@ -73,7 +82,7 @@
           title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
           value: SAMPLE_TEXT,
           defaultCursorPosition: 18,
-          selectedRange: { start: 18, end: 29}
+          correctSelectedRange: { start: 18, end: 29}
        }));
        questions.push(new CursorQuestion(
          {
@@ -89,7 +98,7 @@
             title: "Using Alt + Shift + Left, select \"some more\"",
             value: SAMPLE_TEXT,
             defaultCursorPosition: 17,
-            selectedRange: { start: 8, end: 17}
+            correctSelectedRange: { start: 8, end: 17}
          }));
          questions.push(new CursorQuestion(
            {
@@ -99,6 +108,30 @@
              defaultCursorPosition: 0,
              correctCursorPosition: 59
           }));
+          questions.push(new ContentQuestion(
+            {
+              index: 6,
+              title: "Using Ctrl + K, delete the first line and the empty line left behind",
+              value: SAMPLE_TEXT +  NEW_LINE + SAMPLE_TEXT,
+              defaultCursorPosition: 0,
+              correctValue: SAMPLE_TEXT
+           }));
+           questions.push(new ContentQuestion(
+             {
+               index: 7,
+               title: "Using Ctrl + Y, yank the deleted text back",
+               value: SAMPLE_TEXT,
+               defaultCursorPosition: 0,
+               correctValue: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT
+            }));
+            questions.push(new SelectionQuestion(
+              {
+                index: 8,
+                title: "Using Cmd + A, select all the text",
+                value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
+                defaultCursorPosition: 0,
+                correctSelectedRange: { start: 0, end: 59}
+             }));
   }
 
   /* BaseView Definition */
@@ -157,16 +190,19 @@
         that.checkCursorPosition();
       }
       if (SelectionQuestion.prototype.isPrototypeOf(currentQuestion)) {
-        that.checkCurrentSelection();
+        that.checkSelection();
+      }
+      if (ContentQuestion.prototype.isPrototypeOf(currentQuestion)) {
+        that.checkContent();
       }
     });
   };
 
-  QuestionView.prototype.checkCurrentSelection = function() {
+  QuestionView.prototype.checkSelection = function() {
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    this.toggleUI(selectionStart == this.question.selectedRange.start && selectionEnd == this.question.selectedRange.end)
+    this.toggleUI(selectionStart == this.question.correctSelectedRange.start && selectionEnd == this.question.correctSelectedRange.end)
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
@@ -174,6 +210,11 @@
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
     this.toggleUI(selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+  }
+
+  QuestionView.prototype.checkContent = function() {
+    var currentContent = this.ui.textField.get(0).value;
+    this.toggleUI(currentContent == this.question.correctValue);
   }
 
   QuestionView.prototype.toggleUI = function(show) {
