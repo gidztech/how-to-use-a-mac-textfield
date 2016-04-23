@@ -2,12 +2,14 @@
   var questions = [];
   var currentQuestionIndex = 0;
   var nextQuestion = $(".nextQuestion");
+  var SAMPLE_TEXT = "This is some more sample text";
+  var NEW_LINE = "\n"
 
   function initApp() {
     initQuestions();
 
     if (questions.length) {
-      new QuestionView($('#questions'), questions[0]);
+      new QuestionView($('#questions'), questions[currentQuestionIndex]);
 
       nextQuestion.on("click", function() {
         new QuestionView($('#questions'), questions[++currentQuestionIndex]);
@@ -60,7 +62,7 @@
        {
          index: 1,
          title: "Using Cmd + Left/Right, move the cursor to the start of the line",
-         value: "This is some more sample text",
+         value: SAMPLE_TEXT,
          defaultCursorPosition: 14,
          correctCursorPosition: 0
       }));
@@ -69,11 +71,34 @@
         {
           index: 2,
           title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
-          value: "This is some more sample text",
+          value: SAMPLE_TEXT,
           defaultCursorPosition: 18,
           selectedRange: { start: 18, end: 29}
        }));
-
+       questions.push(new CursorQuestion(
+         {
+           index: 3,
+           title: "Using Alt + Right, jump to the start of the word \"more\"",
+           value: SAMPLE_TEXT,
+           defaultCursorPosition: 25,
+           correctCursorPosition: 13
+        }));
+        questions.push(new SelectionQuestion(
+          {
+            index: 4,
+            title: "Using Alt + Shift + Left, select \"some more\"",
+            value: SAMPLE_TEXT,
+            defaultCursorPosition: 17,
+            selectedRange: { start: 8, end: 17}
+         }));
+         questions.push(new CursorQuestion(
+           {
+             index: 5,
+             title: "Using Cmd + Down, jump to the end of the document",
+             value: SAMPLE_TEXT +  NEW_LINE + SAMPLE_TEXT,
+             defaultCursorPosition: 0,
+             correctCursorPosition: 59
+          }));
   }
 
   /* BaseView Definition */
@@ -138,13 +163,20 @@
   };
 
   QuestionView.prototype.checkCurrentSelection = function() {
+    var selectionStart = this.ui.textField.get(0).selectionStart;
+    var selectionEnd = this.ui.textField.get(0).selectionEnd;
+
+    this.toggleUI(selectionStart == this.question.selectedRange.start && selectionEnd == this.question.selectedRange.end)
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    var show = (selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+    this.toggleUI(selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+  }
+
+  QuestionView.prototype.toggleUI = function(show) {
     var moreQuestionsExist = (questions[currentQuestionIndex + 1] !== undefined);
     this.ui.correct.toggleClass("hidden", !show);
     // show = true, moreQuestionsExist = true
@@ -156,7 +188,7 @@
     // show = false, moreQuestionsExist = false
       // true || true => hidden
     nextQuestion.toggleClass("hidden", (!show || !moreQuestionsExist));
-  };
+  }
 
   initApp();
 })();
