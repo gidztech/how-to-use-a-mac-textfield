@@ -3,33 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <title>How to use a Mac Text Field</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+<link rel="stylesheet" type="text/css" href="css/style.css" media="screen">
+<link rel="stylesheet" type="text/css" href="css/bootstrap.min.css" media="screen">
 </head>
 
 <body>
+  <div class="container-fluid">
+    <div class="row-fluid">
+      <div class="span3 centering text-center">
+        <h1>How To Use A Mac Text Field</h1>
+        <div id="questions">
+        </div>
 
-  <script type="text/javascript" src="jquery-1.12.3.min.js"></script>
-  <script type="text/javascript" src="node_modules/mustache/mustache.min.js"></script>
+        <button class="prevQuestion btn btn-default" type="button" disabled="true">Previous Question</button>
+        <button class="nextQuestion btn btn-primary" type="button" disabled="true">Next Question</button>
+        <button class="startOver btn btn-danger" type="button">Start Over</button>
 
-  <div id="questions">
-  </div>
+        <script id="questionTemplate" type="text/template">
+          <div>
+            <div class="question lead">
+              {{questionNo}}. {{question}}
+            </div>
+            <div class="entry">
+              <textarea cols="50" rows="5" autofocus="true" class="text-field">{{value}}</textarea>
+              <h4><p class="correct alert alert-success hidden">Correct</p></h4>
+            </div>
+          </div>
+        </script>
 
-  <button class="prevQuestion" type="button" disabled="true">Previous Question</button>
-  <button class="nextQuestion" type="button" disabled="true">Next Question</button>
-
-  <script id="questionTemplate" type="text/template">
-    <div>
-      <div class="question">
-        {{questionNo}}. {{question}}
-      </div>
-      <div class="entry">
-        <textarea cols="50" rows="5" autofocus="true" class="text-field">{{value}}</textarea>
-        <span class="correct hidden">Correct</span>
       </div>
     </div>
-  </script>
+  </div>
 
-  <script type="text/javascript" src="app.js"></script>
+  <script type="text/javascript" src="js/jquery-1.12.3.min.js"></script>
+  <script type="text/javascript" src="js/bootstrap.min.js"></script>
+  <script type="text/javascript" src="node_modules/mustache/mustache.min.js"></script>
+  <script type="text/javascript" src="js/app.js"></script>
 
 </body>
 </html>

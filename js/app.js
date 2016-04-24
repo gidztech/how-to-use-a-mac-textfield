@@ -3,6 +3,7 @@
   var currentQuestionIndex = 0;
   var prevQuestion = $(".prevQuestion");
   var nextQuestion = $(".nextQuestion");
+  var startOver = $(".startOver");
   var SAMPLE_TEXT = "This is some more sample text";
   var NEW_LINE = "\n"
 
@@ -23,6 +24,13 @@
         new QuestionView($('#questions'), questions[++currentQuestionIndex]);
         nextQuestion.get(0).disabled = true;
         prevQuestion.get(0).disabled = false;
+      });
+
+      startOver.on("click", function() {
+        currentQuestionIndex = 0;
+        new QuestionView($('#questions'), questions[currentQuestionIndex]);
+        nextQuestion.get(0).disabled = true;
+        prevQuestion.get(0).disabled = true;
       });
     }
   }

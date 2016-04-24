@@ -1,6 +1,11 @@
 .text-field {
   height: 100px;
-  width: 300px;
+  width: 800px;
+}
+
+.correct {
+  width: 800px;
+  margin: auto;
 }
 
 .hidden {
