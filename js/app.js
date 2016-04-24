@@ -1,5 +1,7 @@
 (function() {
   var questions = [];
+  var appView = null;
+  var questionView = null;
 
   function initApp() {
     initQuestions();
@@ -205,21 +207,24 @@
   }
 
   /* BaseView Definition */
-  function BaseView(element, templateData) {
+  function BaseView(element) {
     this.element = $(element);
-    this.render(templateData);
+    this.render();
   }
 
   BaseView.prototype = {
-    render: function(templateData) {
+    render: function() {
       var templateTag = $("#" + this.template).html();
       Mustache.parse(templateTag);
-      var rendered = Mustache.render(templateTag, templateData);
+      var rendered = Mustache.render(templateTag, this.getTemplateData());
       this.element.html(rendered);
       this.afterRender();
     },
     afterRender: function() {
       console.log("Default afterRender");
+    },
+    getTemplateData: function() {
+      return {};
     }
   }
 
@@ -229,11 +234,7 @@
     this.onStateChange = onStateChange;
 
     // Call the super constructor (BaseView) using the QuestionView context as "this"
-    BaseView.call(this, element, {
-      questionNo: (this.question.index + 1),
-      question: this.question.title,
-      value: this.question.value
-    });
+    BaseView.call(this, element);
   }
 
   function AppView(element) {
@@ -245,53 +246,53 @@
   AppView.prototype.constructor = AppView;
   AppView.prototype.template = "appTemplate";
 
+
+  AppView.prototype.onStateChange = function(show) {
+    var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
+    // show = true, moreQuestionsExist = true
+      // false || false => false => visible
+    // show = true, moreQuestionsExist = false
+      // false || true => true => hidden
+    // show = false, moreQuestionsExist = true
+      // true || false => true => hidden
+    // show = false, moreQuestionsExist = false
+      // true || true => hidden
+    this.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
+
+    if (!moreQuestionsExist && show) {
+      this.ui.complete.toggleClass("hidden", false);
+    }
+  }
   // AppView implementation of afterRender
   AppView.prototype.afterRender = function() {
     this.ui = {};
     this.currentQuestionIndex = 0;
-    this.ui.prevQuestion = $(".prevQuestion");
-    this.ui.nextQuestion = $(".nextQuestion");
-    this.ui.startOver = $(".startOver");
-    this.ui.complete = $(".complete");
+    this.ui.prevQuestion = this.element.find(".prevQuestion");
+    this.ui.nextQuestion = this.element.find(".nextQuestion");
+    this.ui.startOver = this.element.find(".startOver");
+    this.ui.complete = this.element.find(".complete");
 
     var that = this;
 
-    this.onStateChange = function(show) {
-      var moreQuestionsExist = (questions[that.currentQuestionIndex + 1] !== undefined);
-      // show = true, moreQuestionsExist = true
-        // false || false => false => visible
-      // show = true, moreQuestionsExist = false
-        // false || true => true => hidden
-      // show = false, moreQuestionsExist = true
-        // true || false => true => hidden
-      // show = false, moreQuestionsExist = false
-        // true || true => hidden
-      that.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
-
-      if (!moreQuestionsExist && show) {
-        that.ui.complete.toggleClass("hidden", false);
-      }
-    }
-
     if (questions.length) {
-      new QuestionView($('#questions'), questions[that.currentQuestionIndex], that.onStateChange);
+      questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onStateChange.bind(this));
 
       this.ui.prevQuestion.on("click", function() {
         if (that.currentQuestionIndex > 0) {
-          new QuestionView($('#questions'), questions[--that.currentQuestionIndex], that.onStateChange);
+          questionView.showQuestion(questions[--that.currentQuestionIndex]);
           that.ui.prevQuestion.get(0).disabled = (that.currentQuestionIndex - 1 < 0);
         }
       });
 
       this.ui.nextQuestion.on("click", function() {
-        new QuestionView($('#questions'), questions[++that.currentQuestionIndex], that.onStateChange);
+        questionView.showQuestion(questions[++that.currentQuestionIndex]);
         that.ui.nextQuestion.get(0).disabled = true;
         that.ui.prevQuestion.get(0).disabled = false;
       });
 
       this.ui.startOver.on("click", function() {
         that.currentQuestionIndex = 0;
-        new QuestionView($('#questions'), questions[that.currentQuestionIndex], that.onStateChange);
+        questionView.showQuestion(questions[that.currentQuestionIndex]);
         that.ui.nextQuestion.get(0).disabled = true;
         that.ui.prevQuestion.get(0).disabled = true;
         that.ui.complete.toggleClass("hidden", true);
@@ -334,6 +335,19 @@
       }
     });
   };
+
+  QuestionView.prototype.getTemplateData = function() {
+    return {
+      questionNo: (this.question.index + 1),
+      question: this.question.title,
+      value: this.question.value
+    }
+  }
+
+  QuestionView.prototype.showQuestion = function(question) {
+    this.question = question;
+    this.render();
+  }
 
   QuestionView.prototype.updateUI = function(show) {
     this.ui.correct.toggleClass("hidden", !show);
