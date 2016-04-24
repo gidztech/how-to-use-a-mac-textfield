@@ -5,7 +5,7 @@
 
   function initApp() {
     initQuestions();
-    new AppView($('.app-container'));
+    appView = new AppView($('.app-container'));
   }
 
   function BaseQuestion(q) {
@@ -246,7 +246,6 @@
   AppView.prototype.constructor = AppView;
   AppView.prototype.template = "appTemplate";
 
-
   AppView.prototype.onStateChange = function(show) {
     var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
     // show = true, moreQuestionsExist = true
@@ -372,15 +371,16 @@
 
   QuestionView.prototype.checkScrollPosition = function() {
     var scrollTop = this.ui.textField.get(0).scrollTop;
-    var show = (scrollTop == this.question.correctScrollPosition);
 
-    this.onStateChange(show);
+    var show = (scrollTop == this.question.correctScrollPosition);
     this.updateUI(show);
   }
 
   QuestionView.prototype.checkContent = function() {
     var currentContent = this.ui.textField.get(0).value;
-    this.onStateChange(currentContent == this.question.correctValue);
+    
+    var show = (currentContent == this.question.correctValue);
+    this.updateUI(show);
   }
 
   initApp();
