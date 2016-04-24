@@ -1,38 +1,9 @@
 (function() {
   var questions = [];
-  var currentQuestionIndex = 0;
-  var prevQuestion = $(".prevQuestion");
-  var nextQuestion = $(".nextQuestion");
-  var startOver = $(".startOver");
-  var SAMPLE_TEXT = "This is some more sample text";
-  var NEW_LINE = "\n"
 
   function initApp() {
     initQuestions();
-
-    if (questions.length) {
-      new QuestionView($('#questions'), questions[currentQuestionIndex]);
-
-      prevQuestion.on("click", function() {
-        if (currentQuestionIndex > 0) {
-          new QuestionView($('#questions'), questions[--currentQuestionIndex]);
-          prevQuestion.get(0).disabled = (currentQuestionIndex - 1 < 0);
-        }
-      });
-
-      nextQuestion.on("click", function() {
-        new QuestionView($('#questions'), questions[++currentQuestionIndex]);
-        nextQuestion.get(0).disabled = true;
-        prevQuestion.get(0).disabled = false;
-      });
-
-      startOver.on("click", function() {
-        currentQuestionIndex = 0;
-        new QuestionView($('#questions'), questions[currentQuestionIndex]);
-        nextQuestion.get(0).disabled = true;
-        prevQuestion.get(0).disabled = true;
-      });
-    }
+    new AppView($('.app-container'));
   }
 
   function BaseQuestion(q) {
@@ -89,6 +60,10 @@
   }
 
   function initQuestions() {
+
+    var SAMPLE_TEXT = "This is some more sample text";
+    var NEW_LINE = "\n"
+
     questions.push(new CursorQuestion({
       index: getNextIndex(),
       title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
@@ -250,14 +225,73 @@
   }
 
   /* QuestionView Definition*/
-  function QuestionView(element, question) {
+  function QuestionView(element, question, onStateChange) {
     this.question = question;
+    this.onStateChange = onStateChange;
+
     // Call the super constructor (BaseView) using the QuestionView context as "this"
     BaseView.call(this, element, {
       questionNo: (this.question.index + 1),
       question: this.question.title,
       value: this.question.value
     });
+  }
+
+  function AppView(element) {
+    BaseView.call(this, element, {});
+  }
+
+  // AppView extends BaseView
+  AppView.prototype = Object.create(BaseView.prototype);
+  AppView.prototype.constructor = AppView;
+  AppView.prototype.template = "appTemplate";
+
+  // AppView implementation of afterRender
+  AppView.prototype.afterRender = function() {
+    this.ui = {};
+    this.currentQuestionIndex = 0;
+    this.ui.prevQuestion = $(".prevQuestion");
+    this.ui.nextQuestion = $(".nextQuestion");
+    this.ui.startOver = $(".startOver");
+
+    var that = this;
+
+    this.onStateChange = function(show) {
+      var moreQuestionsExist = (questions[that.currentQuestionIndex + 1] !== undefined);
+      // show = true, moreQuestionsExist = true
+        // false || false => false => visible
+      // show = true, moreQuestionsExist = false
+        // false || true => true => hidden
+      // show = false, moreQuestionsExist = true
+        // true || false => true => hidden
+      // show = false, moreQuestionsExist = false
+        // true || true => hidden
+      that.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
+    }
+
+    if (questions.length) {
+      new QuestionView($('#questions'), questions[that.currentQuestionIndex], that.onStateChange);
+
+      this.ui.prevQuestion.on("click", function() {
+        if (that.currentQuestionIndex > 0) {
+          new QuestionView($('#questions'), questions[--that.currentQuestionIndex], that.onStateChange);
+          that.ui.prevQuestion.get(0).disabled = (that.currentQuestionIndex - 1 < 0);
+        }
+      });
+
+      this.ui.nextQuestion.on("click", function() {
+        new QuestionView($('#questions'), questions[++that.currentQuestionIndex], that.onStateChange);
+        that.ui.nextQuestion.get(0).disabled = true;
+        that.ui.prevQuestion.get(0).disabled = false;
+      });
+
+      this.ui.startOver.on("click", function() {
+        that.currentQuestionIndex = 0;
+        new QuestionView($('#questions'), questions[that.currentQuestionIndex], that.onStateChange);
+        that.ui.nextQuestion.get(0).disabled = true;
+        that.ui.prevQuestion.get(0).disabled = true;
+      });
+    }
   }
 
   // QuestionView extends BaseView
@@ -279,61 +313,55 @@
 
     // Bind the main key events where a cursor change may occur
     this.ui.textField.bind("keyup click focus", function() {
-      var currentQuestion = questions[currentQuestionIndex];
 
       // Could also use 'instanceof' since we have a constructor
-      if (CursorQuestion.prototype.isPrototypeOf(currentQuestion)) {
+      if (CursorQuestion.prototype.isPrototypeOf(that.question)) {
         that.checkCursorPosition();
       }
-      if (SelectionQuestion.prototype.isPrototypeOf(currentQuestion)) {
+      if (SelectionQuestion.prototype.isPrototypeOf(that.question)) {
         that.checkSelection();
       }
-      if (ScrollQuestion.prototype.isPrototypeOf(currentQuestion)) {
+      if (ScrollQuestion.prototype.isPrototypeOf(that.question)) {
         that.checkScrollPosition();
       }
-      if (ContentQuestion.prototype.isPrototypeOf(currentQuestion)) {
+      if (ContentQuestion.prototype.isPrototypeOf(that.question)) {
         that.checkContent();
       }
     });
   };
 
+  QuestionView.prototype.updateUI = function(show) {
+    this.ui.correct.toggleClass("hidden", !show);
+    this.onStateChange(show);
+  }
+
   QuestionView.prototype.checkCursorPosition = function() {
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    this.toggleUI(selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+    var show = (selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+    this.updateUI(show);
   }
 
   QuestionView.prototype.checkSelection = function() {
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    this.toggleUI(selectionStart == this.question.correctSelectedRange.start && selectionEnd == this.question.correctSelectedRange.end)
+    var show = (selectionStart == this.question.correctSelectedRange.start && selectionEnd == this.question.correctSelectedRange.end);
+    this.updateUI(show);
   }
 
   QuestionView.prototype.checkScrollPosition = function() {
     var scrollTop = this.ui.textField.get(0).scrollTop;
+    var show = (scrollTop == this.question.correctScrollPosition);
 
-    this.toggleUI(scrollTop == this.question.correctScrollPosition);
+    this.onStateChange(show);
+    this.updateUI(show);
   }
 
   QuestionView.prototype.checkContent = function() {
     var currentContent = this.ui.textField.get(0).value;
-    this.toggleUI(currentContent == this.question.correctValue);
-  }
-
-  QuestionView.prototype.toggleUI = function(show) {
-    var moreQuestionsExist = (questions[currentQuestionIndex + 1] !== undefined);
-    this.ui.correct.toggleClass("hidden", !show);
-    // show = true, moreQuestionsExist = true
-      // false || false => false => visible
-    // show = true, moreQuestionsExist = false
-      // false || true => true => hidden
-    // show = false, moreQuestionsExist = true
-      // true || false => true => hidden
-    // show = false, moreQuestionsExist = false
-      // true || true => hidden
-    nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
+    this.onStateChange(currentContent == this.question.correctValue);
   }
 
   initApp();

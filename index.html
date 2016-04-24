@@ -11,13 +11,19 @@
   <div class="container-fluid">
     <div class="row-fluid">
       <div class="span3 centering text-center">
-        <h1>How To Use A Mac Text Field</h1>
-        <div id="questions">
+
+        <div class="app-container">
         </div>
 
-        <button class="prevQuestion btn btn-default" type="button" disabled="true">Previous Question</button>
-        <button class="nextQuestion btn btn-primary" type="button" disabled="true">Next Question</button>
-        <button class="startOver btn btn-danger" type="button">Start Over</button>
+        <script id="appTemplate" type="text/template">
+          <h1>How To Use A Mac Text Field</h1>
+          <div id="questions">
+          </div>
+
+          <button class="prevQuestion btn btn-default" type="button" disabled="true">Previous Question</button>
+          <button class="nextQuestion btn btn-primary" type="button" disabled="true">Next Question</button>
+          <button class="startOver btn btn-danger" type="button">Start Over</button>
+        </script>
 
         <script id="questionTemplate" type="text/template">
           <div>
