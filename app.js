@@ -40,6 +40,13 @@
     BaseQuestion.call(this, q);
   }
 
+  function ScrollQuestion(q) {
+    this.correctScrollPosition = q.correctScrollPosition;
+
+    // Call the super constructor (BaseQuestion) using the ScrollQuestion context as "this"
+    BaseQuestion.call(this, q);
+  }
+
   function ContentQuestion(q) {
     this.correctValue = q.correctValue;
 
@@ -53,85 +60,157 @@
   // SelectionQuestion extends BaseQuestion
   SelectionQuestion.prototype = Object.create(BaseQuestion.prototype);
   SelectionQuestion.prototype.constructor = SelectionQuestion;
+  // ScrollQuestion extends BaseQuestion
+  ScrollQuestion.prototype = Object.create(BaseQuestion.prototype);
+  ScrollQuestion.prototype.constructor = ScrollQuestion;
   // ContentQuestion extends BaseQuestion
   ContentQuestion.prototype = Object.create(BaseQuestion.prototype);
   ContentQuestion.prototype.constructor = ContentQuestion;
 
+  function getNextIndex() {
+    return questions.length;
+  }
+
   function initQuestions() {
-    questions.push(new CursorQuestion(
-      {
-        index: 0,
-        title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
-        value: "This is some sample text",
+    questions.push(new CursorQuestion({
+      index: getNextIndex(),
+      title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
+      value: "This is some sample text",
+      defaultCursorPosition: 10,
+      correctCursorPosition: 8
+    }));
+
+    questions.push(new CursorQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + Left/Right, move the cursor to the start of the line",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 14,
+        correctCursorPosition: 0
+    }));
+
+    questions.push(new SelectionQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 18,
+        correctSelectedRange: {
+            start: 18,
+            end: 29
+        }
+    }));
+    questions.push(new CursorQuestion({
+        index: getNextIndex(),
+        title: "Using Alt + Right, jump to the start of the word \"more\"",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 25,
+        correctCursorPosition: 13
+    }));
+    questions.push(new SelectionQuestion({
+        index: getNextIndex(),
+        title: "Using Alt + Shift + Left, select \"some more\"",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 17,
+        correctSelectedRange: {
+            start: 8,
+            end: 17
+        }
+    }));
+    questions.push(new CursorQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + Down, jump to the end of the document",
+        value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctCursorPosition: 59
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Ctrl + K, delete the first line and the empty line left behind",
+        value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctValue: SAMPLE_TEXT
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Ctrl + Y, yank the deleted text back",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctValue: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT
+    }));
+    questions.push(new SelectionQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + A, select all the text",
+        value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctSelectedRange: {
+            start: 0,
+            end: 59
+        }
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + X, cut the word \"more\"",
+        value: SAMPLE_TEXT,
         defaultCursorPosition: 10,
-        correctCursorPosition: 8
-     }));
-
-     questions.push(new CursorQuestion(
-       {
-         index: 1,
-         title: "Using Cmd + Left/Right, move the cursor to the start of the line",
-         value: SAMPLE_TEXT,
-         defaultCursorPosition: 14,
-         correctCursorPosition: 0
-      }));
-
-      questions.push(new SelectionQuestion(
-        {
-          index: 2,
-          title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
-          value: SAMPLE_TEXT,
-          defaultCursorPosition: 18,
-          correctSelectedRange: { start: 18, end: 29}
-       }));
-       questions.push(new CursorQuestion(
-         {
-           index: 3,
-           title: "Using Alt + Right, jump to the start of the word \"more\"",
-           value: SAMPLE_TEXT,
-           defaultCursorPosition: 25,
-           correctCursorPosition: 13
-        }));
-        questions.push(new SelectionQuestion(
-          {
-            index: 4,
-            title: "Using Alt + Shift + Left, select \"some more\"",
-            value: SAMPLE_TEXT,
-            defaultCursorPosition: 17,
-            correctSelectedRange: { start: 8, end: 17}
-         }));
-         questions.push(new CursorQuestion(
-           {
-             index: 5,
-             title: "Using Cmd + Down, jump to the end of the document",
-             value: SAMPLE_TEXT +  NEW_LINE + SAMPLE_TEXT,
-             defaultCursorPosition: 0,
-             correctCursorPosition: 59
-          }));
-          questions.push(new ContentQuestion(
-            {
-              index: 6,
-              title: "Using Ctrl + K, delete the first line and the empty line left behind",
-              value: SAMPLE_TEXT +  NEW_LINE + SAMPLE_TEXT,
-              defaultCursorPosition: 0,
-              correctValue: SAMPLE_TEXT
-           }));
-           questions.push(new ContentQuestion(
-             {
-               index: 7,
-               title: "Using Ctrl + Y, yank the deleted text back",
-               value: SAMPLE_TEXT,
-               defaultCursorPosition: 0,
-               correctValue: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT
-            }));
-            questions.push(new SelectionQuestion(
-              {
-                index: 8,
-                title: "Using Cmd + A, select all the text",
-                value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
-                defaultCursorPosition: 0,
-                correctSelectedRange: { start: 0, end: 59}
-             }));
+        correctValue: SAMPLE_TEXT.replace(" more", "")
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Cmd + V, paste the word \"more\" back in the original place",
+        value: SAMPLE_TEXT.replace(" more", ""),
+        defaultCursorPosition: 10,
+        correctValue: SAMPLE_TEXT
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Fn + Backspace, delete until only the words \"sample text\" shows",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctValue: SAMPLE_TEXT.replace("This is some more ", "")
+    }));
+    questions.push(new ContentQuestion({
+        index: getNextIndex(),
+        title: "Using Alt + Backspace, delete until only the words \"more sample text\" shows",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 13,
+        correctValue: SAMPLE_TEXT.replace("This is some ", "")
+    }));
+    questions.push(new SelectionQuestion({
+        index: getNextIndex(),
+        title: "Double tap on the word \"sample\" to select it",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctSelectedRange: {
+            start: 18,
+            end: 24
+        }
+    }));
+    questions.push(new SelectionQuestion({
+        index: getNextIndex(),
+        title: "Tripple tap on a word to select the whole line",
+        value: SAMPLE_TEXT,
+        defaultCursorPosition: 0,
+        correctSelectedRange: {
+            start: 0,
+            end: 29
+        }
+    }));
+    questions.push(new ScrollQuestion({
+        index: getNextIndex(),
+        title: "Using Fn + Down, scroll the the text area",
+        value:
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE +
+          SAMPLE_TEXT + NEW_LINE,
+        defaultCursorPosition: 0,
+        correctScrollPosition: 43
+    }));
   }
 
   /* BaseView Definition */
@@ -192,11 +271,21 @@
       if (SelectionQuestion.prototype.isPrototypeOf(currentQuestion)) {
         that.checkSelection();
       }
+      if (ScrollQuestion.prototype.isPrototypeOf(currentQuestion)) {
+        that.checkScrollPosition();
+      }
       if (ContentQuestion.prototype.isPrototypeOf(currentQuestion)) {
         that.checkContent();
       }
     });
   };
+
+  QuestionView.prototype.checkCursorPosition = function() {
+    var selectionStart = this.ui.textField.get(0).selectionStart;
+    var selectionEnd = this.ui.textField.get(0).selectionEnd;
+
+    this.toggleUI(selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+  }
 
   QuestionView.prototype.checkSelection = function() {
     var selectionStart = this.ui.textField.get(0).selectionStart;
@@ -205,11 +294,10 @@
     this.toggleUI(selectionStart == this.question.correctSelectedRange.start && selectionEnd == this.question.correctSelectedRange.end)
   }
 
-  QuestionView.prototype.checkCursorPosition = function() {
-    var selectionStart = this.ui.textField.get(0).selectionStart;
-    var selectionEnd = this.ui.textField.get(0).selectionEnd;
+  QuestionView.prototype.checkScrollPosition = function() {
+    var scrollTop = this.ui.textField.get(0).scrollTop;
 
-    this.toggleUI(selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
+    this.toggleUI(scrollTop == this.question.correctScrollPosition);
   }
 
   QuestionView.prototype.checkContent = function() {
