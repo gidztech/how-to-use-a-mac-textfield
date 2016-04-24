@@ -55,17 +55,16 @@
   ContentQuestion.prototype = Object.create(BaseQuestion.prototype);
   ContentQuestion.prototype.constructor = ContentQuestion;
 
-  function getNextIndex() {
-    return questions.length;
-  }
-
   function initQuestions() {
-
     var SAMPLE_TEXT = "This is some more sample text";
     var NEW_LINE = "\n"
 
+    this.getNextIndex = function() {
+      return questions.length;
+    }
+
     questions.push(new CursorQuestion({
-      index: getNextIndex(),
+      index: this.getNextIndex(),
       title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
       value: "This is some sample text",
       defaultCursorPosition: 10,
@@ -73,7 +72,7 @@
     }));
 
     questions.push(new CursorQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + Left/Right, move the cursor to the start of the line",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 14,
@@ -81,7 +80,7 @@
     }));
 
     questions.push(new SelectionQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 18,
@@ -91,14 +90,14 @@
         }
     }));
     questions.push(new CursorQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Alt + Right, jump to the start of the word \"more\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 25,
         correctCursorPosition: 13
     }));
     questions.push(new SelectionQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Alt + Shift + Left, select \"some more\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 17,
@@ -108,28 +107,28 @@
         }
     }));
     questions.push(new CursorQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + Down, jump to the end of the document",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctCursorPosition: 59
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Ctrl + K, delete the first line and the empty line left behind",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Ctrl + Y, yank the deleted text back",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT
     }));
     questions.push(new SelectionQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + A, select all the text",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
         defaultCursorPosition: 0,
@@ -139,35 +138,35 @@
         }
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + X, cut the word \"more\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 10,
         correctValue: SAMPLE_TEXT.replace(" more", "")
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Cmd + V, paste the word \"more\" back in the original place",
         value: SAMPLE_TEXT.replace(" more", ""),
         defaultCursorPosition: 10,
         correctValue: SAMPLE_TEXT
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Fn + Backspace, delete until only the words \"sample text\" shows",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT.replace("This is some more ", "")
     }));
     questions.push(new ContentQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Using Alt + Backspace, delete until only the words \"more sample text\" shows",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 13,
         correctValue: SAMPLE_TEXT.replace("This is some ", "")
     }));
     questions.push(new SelectionQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Double tap on the word \"sample\" to select it",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
@@ -177,7 +176,7 @@
         }
     }));
     questions.push(new SelectionQuestion({
-        index: getNextIndex(),
+        index: this.getNextIndex(),
         title: "Tripple tap on a word to select the whole line",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
@@ -187,8 +186,8 @@
         }
     }));
     questions.push(new ScrollQuestion({
-        index: getNextIndex(),
-        title: "Using Fn + Down, scroll the the text area",
+        index: this.getNextIndex(),
+        title: "Using Fn + Down, scroll the text area",
         value:
           SAMPLE_TEXT + NEW_LINE +
           SAMPLE_TEXT + NEW_LINE +
@@ -201,7 +200,7 @@
           SAMPLE_TEXT + NEW_LINE +
           SAMPLE_TEXT + NEW_LINE,
         defaultCursorPosition: 0,
-        correctScrollPosition: 43
+        correctScrollPosition: 85
     }));
   }
 
@@ -253,6 +252,7 @@
     this.ui.prevQuestion = $(".prevQuestion");
     this.ui.nextQuestion = $(".nextQuestion");
     this.ui.startOver = $(".startOver");
+    this.ui.complete = $(".complete");
 
     var that = this;
 
@@ -267,6 +267,10 @@
       // show = false, moreQuestionsExist = false
         // true || true => hidden
       that.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
+
+      if (!moreQuestionsExist && show) {
+        that.ui.complete.toggleClass("hidden", false);
+      }
     }
 
     if (questions.length) {
@@ -290,6 +294,7 @@
         new QuestionView($('#questions'), questions[that.currentQuestionIndex], that.onStateChange);
         that.ui.nextQuestion.get(0).disabled = true;
         that.ui.prevQuestion.get(0).disabled = true;
+        that.ui.complete.toggleClass("hidden", true);
       });
     }
   }
