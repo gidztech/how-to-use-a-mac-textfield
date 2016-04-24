@@ -1,6 +1,7 @@
 (function() {
   var questions = [];
   var currentQuestionIndex = 0;
+  var prevQuestion = $(".prevQuestion");
   var nextQuestion = $(".nextQuestion");
   var SAMPLE_TEXT = "This is some more sample text";
   var NEW_LINE = "\n"
@@ -11,9 +12,17 @@
     if (questions.length) {
       new QuestionView($('#questions'), questions[currentQuestionIndex]);
 
+      prevQuestion.on("click", function() {
+        if (currentQuestionIndex > 0) {
+          new QuestionView($('#questions'), questions[--currentQuestionIndex]);
+          prevQuestion.get(0).disabled = (currentQuestionIndex - 1 < 0);
+        }
+      });
+
       nextQuestion.on("click", function() {
         new QuestionView($('#questions'), questions[++currentQuestionIndex]);
-        nextQuestion.toggleClass("hidden", true);
+        nextQuestion.get(0).disabled = true;
+        prevQuestion.get(0).disabled = false;
       });
     }
   }
@@ -316,7 +325,7 @@
       // true || false => true => hidden
     // show = false, moreQuestionsExist = false
       // true || true => hidden
-    nextQuestion.toggleClass("hidden", (!show || !moreQuestionsExist));
+    nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
   }
 
   initApp();
