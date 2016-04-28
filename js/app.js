@@ -246,7 +246,7 @@
   AppView.prototype.constructor = AppView;
   AppView.prototype.template = "appTemplate";
 
-  AppView.prototype.onStateChange = function(show) {
+  AppView.prototype.onStateChange = function(show, callback) {
     var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
     // show = true, moreQuestionsExist = true
       // false || false => false => visible
@@ -258,8 +258,12 @@
       // true || true => hidden
     this.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
 
-    if (!moreQuestionsExist && show) {
-      this.ui.complete.toggleClass("hidden", false);
+    if (show) {
+      if (!moreQuestionsExist) {
+        this.ui.complete.toggleClass("hidden", false);
+      } else {
+        if (callback) callback(this); // pass the AppView to the callback so we can call events on it later, probably bad practice
+      }
     }
   }
   // AppView implementation of afterRender
@@ -309,7 +313,6 @@
     this.ui = {};
     this.ui.textField = this.element.find(".text-field");
     this.ui.correct = this.element.find(".correct");
-    this.ui.nextQuestion = this.element.find(".nextQuestion");
 
     this.ui.textField.get(0).selectionStart = this.question.defaultCursorPosition;
     this.ui.textField.focus();
@@ -349,8 +352,29 @@
   }
 
   QuestionView.prototype.updateUI = function(show) {
+    var that = this;
     this.ui.correct.toggleClass("hidden", !show);
-    this.onStateChange(show);
+
+    this.onStateChange(show, function(app) {
+      // executed by onStateChange on the AppView
+      // add an ENTER key press event to trigger next question
+      if (show) {
+        var existingEvents = $._data(that.ui.textField.get(0), "events");
+
+        if (existingEvents.keypress === undefined) {
+          // if user gets correct answer and interacts with textfield in any other way than ENTER, it would be adding
+          // the handler twice, hence why we only add it if it doesn't already existingEvents
+          // when new question is loaded, textField is re-rendered so events are lost
+          that.ui.textField.on("keypress", function (event) {
+            if ((event.keyCode || event.which) == 13) {
+              app.ui.nextQuestion.click();
+              event.preventDefault();
+              return false;
+            }
+          });
+        }
+      }
+    });
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
@@ -378,7 +402,7 @@
 
   QuestionView.prototype.checkContent = function() {
     var currentContent = this.ui.textField.get(0).value;
-    
+
     var show = (currentContent == this.question.correctValue);
     this.updateUI(show);
   }
