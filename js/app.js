@@ -289,9 +289,8 @@
     this.ui.prevQuestion.get(0).disabled = true;
     this.ui.complete.toggleClass("hidden", true);
 
-    var x = $.map(questions, function (v, i) {
-      v.isCorrectAnswerGiven = false;
-      return v;
+    $.each(questions, function (index, questionInstance) {
+      questionInstance.isCorrectAnswerGiven = false;
     });
   }
 
