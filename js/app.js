@@ -245,8 +245,8 @@
   }
 
   /* QuestionView Definition*/
-  function QuestionView(element, question, onUIStateChange) {
-    this.question = question;
+  function QuestionView(element, questionInstance, onUIStateChange) {
+    this.questionInstance = questionInstance;
     this.onUIStateChange = onUIStateChange;
 
     // Call the super constructor (BaseView) using the QuestionView context as "this"
@@ -263,7 +263,7 @@
   AppView.prototype.template = "appTemplate";
 
   AppView.prototype.onUIStateChange = function(show) {
-    var that = this;
+    var self = this;
 
     var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
     // TODO: Simplify this logic so it's more readable
@@ -291,41 +291,41 @@
     this.ui.startOver = this.element.find(".startOver");
     this.ui.complete = this.element.find(".complete");
 
-    var that = this;
+    var self = this;
 
     if (questions.length) {
       var questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onUIStateChange.bind(this));
 
       // Previous Question Event Handler
       this.ui.prevQuestion.on("click", function() {
-        if (that.currentQuestionIndex > 0) {
-          questionView.showQuestion(questions[--that.currentQuestionIndex]);
-          that.ui.prevQuestion.get(0).disabled = (that.currentQuestionIndex - 1 < 0);
+        if (self.currentQuestionIndex > 0) {
+          questionView.showQuestion(questions[--self.currentQuestionIndex]);
+          self.ui.prevQuestion.get(0).disabled = (self.currentQuestionIndex - 1 < 0);
         }
       });
 
       // Next Question Event Handler
       this.ui.nextQuestion.on("click", function() {
-        questionView.showQuestion(questions[++that.currentQuestionIndex]);
-        that.ui.nextQuestion.get(0).disabled = true;
-        that.ui.prevQuestion.get(0).disabled = false;
+        questionView.showQuestion(questions[++self.currentQuestionIndex]);
+        self.ui.nextQuestion.get(0).disabled = true;
+        self.ui.prevQuestion.get(0).disabled = false;
       });
 
       // Start Over Event Handler
       this.ui.startOver.on("click", function() {
-        that.currentQuestionIndex = 0;
-        questionView.showQuestion(questions[that.currentQuestionIndex]);
-        that.ui.nextQuestion.get(0).disabled = true;
-        that.ui.prevQuestion.get(0).disabled = true;
-        that.ui.complete.toggleClass("hidden", true);
+        self.currentQuestionIndex = 0;
+        questionView.showQuestion(questions[self.currentQuestionIndex]);
+        self.ui.nextQuestion.get(0).disabled = true;
+        self.ui.prevQuestion.get(0).disabled = true;
+        self.ui.complete.toggleClass("hidden", true);
       });
 
       // ENTER Key Event Handler
       this.element.on("keypress", function(event) {
         if ((event.keyCode || event.which) == 13) {
           // If the current question is correctly answered, ENTER will move to next question
-          if (questions[that.currentQuestionIndex].isCorrectAnswerGiven) {
-            that.ui.nextQuestion.click();
+          if (questions[self.currentQuestionIndex].isCorrectAnswerGiven) {
+            self.ui.nextQuestion.click();
             event.preventDefault();
             return false;
           }
@@ -341,54 +341,49 @@
 
   // QuestionView implementation of afterRender
   QuestionView.prototype.afterRender = function() {
-    var questionInstance = this.question;
-
     this.ui = {};
     this.ui.textField = this.element.find(".text-field");
     this.ui.correct = this.element.find(".correct");
 
-    this.ui.textField.get(0).selectionStart = questionInstance.question.defaultCursorPosition;
+    this.ui.textField.get(0).selectionStart = this.questionInstance.question.defaultCursorPosition;
     this.ui.textField.focus();
 
-    var that = this;
+    var self = this;
 
     // Bind the main key events where a cursor change may occur
     this.ui.textField.bind("keyup click focus", function() {
       // Could also use 'instanceof' since we have a constructor
-      if (CursorQuestion.prototype.isPrototypeOf(questionInstance.question)) {
-        that.checkCursorPosition();
+      if (CursorQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
+        self.checkCursorPosition();
       }
-      if (SelectionQuestion.prototype.isPrototypeOf(questionInstance.question)) {
-        that.checkSelection();
+      if (SelectionQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
+        self.checkSelection();
       }
-      if (ScrollQuestion.prototype.isPrototypeOf(questionInstance.question)) {
-        that.checkScrollPosition();
+      if (ScrollQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
+        self.checkScrollPosition();
       }
-      if (ContentQuestion.prototype.isPrototypeOf(questionInstance.question)) {
-        that.checkContent();
+      if (ContentQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
+        self.checkContent();
       }
 
     });
   };
 
   QuestionView.prototype.getTemplateData = function() {
-    var questionInstance = this.question;;
-
     return {
-      questionNo: (questionInstance.question.index + 1),
-      question: questionInstance.question.title,
-      value: questionInstance.question.value
+      questionNo: (this.questionInstance.question.index + 1),
+      question: this.questionInstance.question.title,
+      value: this.questionInstance.question.value
     }
   }
 
-  QuestionView.prototype.showQuestion = function(question) {
-    this.question = question;
+  QuestionView.prototype.showQuestion = function(questionInstance) {
+    this.questionInstance = questionInstance;
     this.render();
   }
 
   QuestionView.prototype.update = function(show) {
-    var questionInstance = this.question;
-    questionInstance.isCorrectAnswerGiven = show;
+    this.questionInstance.isCorrectAnswerGiven = show;
     this.updateUI(show);
   }
 
@@ -398,38 +393,34 @@
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
-    var questionInstance = this.question;
-
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    var show = (selectionStart == questionInstance.question.correctCursorPosition && selectionEnd == questionInstance.question.correctCursorPosition);
+    var show = (selectionStart == this.questionInstance.question.correctCursorPosition &&
+      selectionEnd == this.questionInstance.question.correctCursorPosition);
     this.update(show);
   }
 
   QuestionView.prototype.checkSelection = function() {
-    var questionInstance = this.question;
-
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    var show = (selectionStart == questionInstance.question.correctSelectedRange.start && selectionEnd == questionInstance.question.correctSelectedRange.end);
+    var show = (selectionStart == this.questionInstance.question.correctSelectedRange.start &&
+      selectionEnd == this.questionInstance.question.correctSelectedRange.end);
     this.update(show);
   }
 
   QuestionView.prototype.checkScrollPosition = function() {
-    var questionInstance = this.question;
     var scrollTop = this.ui.textField.get(0).scrollTop;
 
-    var show = (scrollTop == questionInstance.question.correctScrollPosition);
+    var show = (scrollTop == this.questionInstance.question.correctScrollPosition);
     this.update(show);
   }
 
   QuestionView.prototype.checkContent = function() {
-    var questionInstance = this.question;
     var currentContent = this.ui.textField.get(0).value;
 
-    var show = (currentContent == questionInstance.question.correctValue);
+    var show = (currentContent == this.questionInstance.question.correctValue);
     this.update(show);
   }
 
