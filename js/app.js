@@ -282,6 +282,19 @@
       this.ui.complete.toggleClass("hidden", false);
     }
   }
+
+  AppView.prototype.reset = function() {
+    this.currentQuestionIndex = 0;
+    this.ui.nextQuestion.get(0).disabled = true;
+    this.ui.prevQuestion.get(0).disabled = true;
+    this.ui.complete.toggleClass("hidden", true);
+
+    var x = $.map(questions, function (v, i) {
+      v.isCorrectAnswerGiven = false;
+      return v;
+    });
+  }
+
   // AppView implementation of afterRender
   AppView.prototype.afterRender = function() {
     this.ui = {};
@@ -307,17 +320,14 @@
       // Next Question Event Handler
       this.ui.nextQuestion.on("click", function() {
         questionView.showQuestion(questions[++self.currentQuestionIndex]);
-        self.ui.nextQuestion.get(0).disabled = true;
+        self.ui.nextQuestion.get(0).disabled = !questions[self.currentQuestionIndex].isCorrectAnswerGiven;
         self.ui.prevQuestion.get(0).disabled = false;
       });
 
       // Start Over Event Handler
       this.ui.startOver.on("click", function() {
-        self.currentQuestionIndex = 0;
+        self.reset();
         questionView.showQuestion(questions[self.currentQuestionIndex]);
-        self.ui.nextQuestion.get(0).disabled = true;
-        self.ui.prevQuestion.get(0).disabled = true;
-        self.ui.complete.toggleClass("hidden", true);
       });
 
       // ENTER Key Event Handler
@@ -339,6 +349,30 @@
   QuestionView.prototype.constructor = QuestionView;
   QuestionView.prototype.template = "questionTemplate";
 
+  QuestionView.prototype.processTextFieldEvents = function(args) {
+    // Could also use 'instanceof' since we have a constructor
+    if (CursorQuestion.prototype.isPrototypeOf(this.questionInstance.question)) {
+      args.isSetMode ? this.setCorrectCursorPosition() : this.checkCursorPosition();
+    }
+    if (SelectionQuestion.prototype.isPrototypeOf(this.questionInstance.question)) {
+      args.isSetMode ? this.setCorrectSelection() : this.checkSelection();
+    }
+    if (ScrollQuestion.prototype.isPrototypeOf(this.questionInstance.question)) {
+      args.isSetMode ? this.checkScrollPosition() : this.checkScrollPosition();
+    }
+    if (ContentQuestion.prototype.isPrototypeOf(this.questionInstance.question)) {
+      args.isSetMode ? this.setCorrectContent() : this.checkContent();
+    }
+  }
+
+  QuestionView.prototype.bindTextFieldEvents = function() {
+    var self = this;
+
+    // Bind the main key events where a cursor change may occur
+    this.ui.textField.bind("keyup click focus", function() {
+      self.processTextFieldEvents({ isSetMode: false});
+    });
+  }
   // QuestionView implementation of afterRender
   QuestionView.prototype.afterRender = function() {
     this.ui = {};
@@ -348,25 +382,11 @@
     this.ui.textField.get(0).selectionStart = this.questionInstance.question.defaultCursorPosition;
     this.ui.textField.focus();
 
-    var self = this;
+    this.bindTextFieldEvents();
 
-    // Bind the main key events where a cursor change may occur
-    this.ui.textField.bind("keyup click focus", function() {
-      // Could also use 'instanceof' since we have a constructor
-      if (CursorQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
-        self.checkCursorPosition();
-      }
-      if (SelectionQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
-        self.checkSelection();
-      }
-      if (ScrollQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
-        self.checkScrollPosition();
-      }
-      if (ContentQuestion.prototype.isPrototypeOf(self.questionInstance.question)) {
-        self.checkContent();
-      }
-
-    });
+    if (this.questionInstance.isCorrectAnswerGiven) {
+      this.processTextFieldEvents({ isSetMode: true});
+    }
   };
 
   QuestionView.prototype.getTemplateData = function() {
@@ -393,21 +413,40 @@
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
-    var selectionStart = this.ui.textField.get(0).selectionStart;
-    var selectionEnd = this.ui.textField.get(0).selectionEnd;
+    var textField = this.ui.textField.get(0);
+    var selectionStart = textField.selectionStart;
+    var selectionEnd = textField.selectionEnd;
 
     var show = (selectionStart == this.questionInstance.question.correctCursorPosition &&
       selectionEnd == this.questionInstance.question.correctCursorPosition);
     this.update(show);
   }
 
+  QuestionView.prototype.setCorrectCursorPosition = function() {
+    var textField = this.ui.textField.get(0);
+    textField.selectionStart = this.questionInstance.question.correctCursorPosition;
+    textField.selectionEnd = this.questionInstance.question.correctCursorPosition;
+
+    this.update(true);
+  }
+
   QuestionView.prototype.checkSelection = function() {
-    var selectionStart = this.ui.textField.get(0).selectionStart;
-    var selectionEnd = this.ui.textField.get(0).selectionEnd;
+    var textField = this.ui.textField.get(0);
+    var selectionStart = textField.selectionStart;
+    var selectionEnd = textField.selectionEnd;
 
     var show = (selectionStart == this.questionInstance.question.correctSelectedRange.start &&
       selectionEnd == this.questionInstance.question.correctSelectedRange.end);
+
     this.update(show);
+  }
+
+  QuestionView.prototype.setCorrectSelection = function() {
+    var textField = this.ui.textField.get(0);
+    textField.selectionStart = this.questionInstance.question.correctSelectedRange.start;
+    textField.selectionEnd = this.questionInstance.question.correctSelectedRange.end;
+
+    this.update(true);
   }
 
   QuestionView.prototype.checkScrollPosition = function() {
@@ -417,11 +456,25 @@
     this.update(show);
   }
 
+  QuestionView.prototype.setCorrectScrollPosition = function() {
+    var textField = this.ui.textField.get(0);
+    textField.scrollTop = this.questionInstance.question.correctScrollPosition;
+
+    this.update(true);
+  }
+
   QuestionView.prototype.checkContent = function() {
     var currentContent = this.ui.textField.get(0).value;
 
     var show = (currentContent == this.questionInstance.question.correctValue);
     this.update(show);
+  }
+
+  QuestionView.prototype.setCorrectContent = function() {
+    var textField = this.ui.textField.get(0);
+    textField.value = this.questionInstance.question.correctValue;
+
+    this.update(true);
   }
 
   initApp();
