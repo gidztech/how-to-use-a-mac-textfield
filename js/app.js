@@ -6,6 +6,11 @@
     new AppView($('.app-container'));
   }
 
+  function QuestionInstance(question, isCorrectAnswerGiven) {
+    this.question = question;
+    this.isCorrectAnswerGiven = isCorrectAnswerGiven;
+  }
+
   function BaseQuestion(q) {
     this.index = q.index;
     this.title = q.title;
@@ -63,23 +68,23 @@
       return questions.length;
     }
 
-    questions.push(new CursorQuestion({
+    questions.push(new QuestionInstance(new CursorQuestion({
       index: this.getNextIndex(),
       title: "Using LEFT and RIGHT keys only, move the cursor to the position before the \"s\" in \"some\"",
       value: "This is some sample text",
       defaultCursorPosition: 10,
       correctCursorPosition: 8
-    }));
+    }), false));
 
-    questions.push(new CursorQuestion({
+    questions.push(new QuestionInstance(new CursorQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + Left/Right, move the cursor to the start of the line",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 14,
         correctCursorPosition: 0
-    }));
+    }), false));
 
-    questions.push(new SelectionQuestion({
+    questions.push(new QuestionInstance(new SelectionQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + Shift + Right, select all text to the right of the space before \"sample\"",
         value: SAMPLE_TEXT,
@@ -88,15 +93,17 @@
             start: 18,
             end: 29
         }
-    }));
-    questions.push(new CursorQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new CursorQuestion({
         index: this.getNextIndex(),
         title: "Using Alt + Right, jump to the start of the word \"more\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 25,
         correctCursorPosition: 13
-    }));
-    questions.push(new SelectionQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new SelectionQuestion({
         index: this.getNextIndex(),
         title: "Using Alt + Shift + Left, select \"some more\"",
         value: SAMPLE_TEXT,
@@ -105,29 +112,33 @@
             start: 8,
             end: 17
         }
-    }));
-    questions.push(new CursorQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new CursorQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + Down, jump to the end of the document",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctCursorPosition: 59
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Ctrl + K, delete the first line and the empty line left behind",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Ctrl + Y, yank the deleted text back",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT
-    }));
-    questions.push(new SelectionQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new SelectionQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + A, select all the text",
         value: SAMPLE_TEXT + NEW_LINE + SAMPLE_TEXT,
@@ -136,36 +147,41 @@
             start: 0,
             end: 59
         }
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + X, cut the word \"more\"",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 10,
         correctValue: SAMPLE_TEXT.replace(" more", "")
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Cmd + V, paste the word \"more\" back in the original place",
         value: SAMPLE_TEXT.replace(" more", ""),
         defaultCursorPosition: 10,
         correctValue: SAMPLE_TEXT
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Fn + Backspace, delete until only the words \"sample text\" shows",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 0,
         correctValue: SAMPLE_TEXT.replace("This is some more ", "")
-    }));
-    questions.push(new ContentQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ContentQuestion({
         index: this.getNextIndex(),
         title: "Using Alt + Backspace, delete until only the words \"more sample text\" shows",
         value: SAMPLE_TEXT,
         defaultCursorPosition: 13,
         correctValue: SAMPLE_TEXT.replace("This is some ", "")
-    }));
-    questions.push(new SelectionQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new SelectionQuestion({
         index: this.getNextIndex(),
         title: "Double tap on the word \"sample\" to select it",
         value: SAMPLE_TEXT,
@@ -174,8 +190,9 @@
             start: 18,
             end: 24
         }
-    }));
-    questions.push(new SelectionQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new SelectionQuestion({
         index: this.getNextIndex(),
         title: "Tripple tap on a word to select the whole line",
         value: SAMPLE_TEXT,
@@ -184,8 +201,9 @@
             start: 0,
             end: 29
         }
-    }));
-    questions.push(new ScrollQuestion({
+    }), false));
+
+    questions.push(new QuestionInstance(new ScrollQuestion({
         index: this.getNextIndex(),
         title: "Using Fn + Down, scroll the text area",
         value:
@@ -201,7 +219,7 @@
           SAMPLE_TEXT + NEW_LINE,
         defaultCursorPosition: 0,
         correctScrollPosition: 85
-    }));
+    }), false));
   }
 
   /* BaseView Definition */
@@ -227,9 +245,9 @@
   }
 
   /* QuestionView Definition*/
-  function QuestionView(element, question, onStateChange) {
+  function QuestionView(element, question, onUIStateChange) {
     this.question = question;
-    this.onStateChange = onStateChange;
+    this.onUIStateChange = onUIStateChange;
 
     // Call the super constructor (BaseView) using the QuestionView context as "this"
     BaseView.call(this, element);
@@ -244,10 +262,12 @@
   AppView.prototype.constructor = AppView;
   AppView.prototype.template = "appTemplate";
 
-  AppView.prototype.onStateChange = function(show, callback) {
+  AppView.prototype.onUIStateChange = function(show) {
     var that = this;
 
     var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
+    // TODO: Simplify this logic so it's more readable
+
     // show = true, moreQuestionsExist = true
       // false || false => false => visible
     // show = true, moreQuestionsExist = false
@@ -257,16 +277,9 @@
     // show = false, moreQuestionsExist = false
       // true || true => hidden
     this.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
-    if (show) {
-      if (!moreQuestionsExist) {
-        this.ui.complete.toggleClass("hidden", false);
-      } else {
-        if (callback) {
-          callback(function() {
-            that.ui.nextQuestion.click();
-          });
-        }
-      }
+
+    if (show && !moreQuestionsExist) {
+      this.ui.complete.toggleClass("hidden", false);
     }
   }
   // AppView implementation of afterRender
@@ -281,8 +294,9 @@
     var that = this;
 
     if (questions.length) {
-      var questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onStateChange.bind(this));
+      var questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onUIStateChange.bind(this));
 
+      // Previous Question Event Handler
       this.ui.prevQuestion.on("click", function() {
         if (that.currentQuestionIndex > 0) {
           questionView.showQuestion(questions[--that.currentQuestionIndex]);
@@ -290,18 +304,32 @@
         }
       });
 
+      // Next Question Event Handler
       this.ui.nextQuestion.on("click", function() {
         questionView.showQuestion(questions[++that.currentQuestionIndex]);
         that.ui.nextQuestion.get(0).disabled = true;
         that.ui.prevQuestion.get(0).disabled = false;
       });
 
+      // Start Over Event Handler
       this.ui.startOver.on("click", function() {
         that.currentQuestionIndex = 0;
         questionView.showQuestion(questions[that.currentQuestionIndex]);
         that.ui.nextQuestion.get(0).disabled = true;
         that.ui.prevQuestion.get(0).disabled = true;
         that.ui.complete.toggleClass("hidden", true);
+      });
+
+      // ENTER Key Event Handler
+      this.element.on("keypress", function(event) {
+        if ((event.keyCode || event.which) == 13) {
+          // If the current question is correctly answered, ENTER will move to next question
+          if (questions[that.currentQuestionIndex].isCorrectAnswerGiven) {
+            that.ui.nextQuestion.click();
+            event.preventDefault();
+            return false;
+          }
+        }
       });
     }
   }
@@ -313,39 +341,43 @@
 
   // QuestionView implementation of afterRender
   QuestionView.prototype.afterRender = function() {
+    var questionInstance = this.question;
+
     this.ui = {};
     this.ui.textField = this.element.find(".text-field");
     this.ui.correct = this.element.find(".correct");
 
-    this.ui.textField.get(0).selectionStart = this.question.defaultCursorPosition;
+    this.ui.textField.get(0).selectionStart = questionInstance.question.defaultCursorPosition;
     this.ui.textField.focus();
 
     var that = this;
 
     // Bind the main key events where a cursor change may occur
     this.ui.textField.bind("keyup click focus", function() {
-
       // Could also use 'instanceof' since we have a constructor
-      if (CursorQuestion.prototype.isPrototypeOf(that.question)) {
+      if (CursorQuestion.prototype.isPrototypeOf(questionInstance.question)) {
         that.checkCursorPosition();
       }
-      if (SelectionQuestion.prototype.isPrototypeOf(that.question)) {
+      if (SelectionQuestion.prototype.isPrototypeOf(questionInstance.question)) {
         that.checkSelection();
       }
-      if (ScrollQuestion.prototype.isPrototypeOf(that.question)) {
+      if (ScrollQuestion.prototype.isPrototypeOf(questionInstance.question)) {
         that.checkScrollPosition();
       }
-      if (ContentQuestion.prototype.isPrototypeOf(that.question)) {
+      if (ContentQuestion.prototype.isPrototypeOf(questionInstance.question)) {
         that.checkContent();
       }
+
     });
   };
 
   QuestionView.prototype.getTemplateData = function() {
+    var questionInstance = this.question;;
+
     return {
-      questionNo: (this.question.index + 1),
-      question: this.question.title,
-      value: this.question.value
+      questionNo: (questionInstance.question.index + 1),
+      question: questionInstance.question.title,
+      value: questionInstance.question.value
     }
   }
 
@@ -354,61 +386,51 @@
     this.render();
   }
 
+  QuestionView.prototype.update = function(show) {
+    var questionInstance = this.question;
+    questionInstance.isCorrectAnswerGiven = show;
+    this.updateUI(show);
+  }
+
   QuestionView.prototype.updateUI = function(show) {
-    var that = this;
     this.ui.correct.toggleClass("hidden", !show);
-
-    var setupEnterHandler = function(goToNextQuestion) {
-      // onStateChange in AppView calls this callback function that we specified so that we can set up ENTER handler
-      var existingEvents = $._data(that.ui.textField.get(0), "events");
-
-      if (typeof existingEvents.keypress === 'undefined') {
-        // if user gets correct answer and interacts with textfield in any other way than ENTER, it would be adding
-        // the handler twice, hence why we only add it if it doesn't already existingEvents
-        // when new question is loaded, textField is re-rendered so events are lost
-        that.ui.textField.on("keypress", function(event) {
-          if ((event.keyCode || event.which) == 13) {
-            // onStateChange in AppView passes in this callback function so that we can call the CLICK event
-            // TODO: AppView shouldn't know what to pass to our callback.
-            goToNextQuestion();
-            event.preventDefault();
-            return false;
-          }
-        });
-      }
-    }
-
-    this.onStateChange(show, setupEnterHandler);
+    this.onUIStateChange(show);
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
+    var questionInstance = this.question;
+
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    var show = (selectionStart == this.question.correctCursorPosition && selectionEnd == this.question.correctCursorPosition);
-    this.updateUI(show);
+    var show = (selectionStart == questionInstance.question.correctCursorPosition && selectionEnd == questionInstance.question.correctCursorPosition);
+    this.update(show);
   }
 
   QuestionView.prototype.checkSelection = function() {
+    var questionInstance = this.question;
+
     var selectionStart = this.ui.textField.get(0).selectionStart;
     var selectionEnd = this.ui.textField.get(0).selectionEnd;
 
-    var show = (selectionStart == this.question.correctSelectedRange.start && selectionEnd == this.question.correctSelectedRange.end);
-    this.updateUI(show);
+    var show = (selectionStart == questionInstance.question.correctSelectedRange.start && selectionEnd == questionInstance.question.correctSelectedRange.end);
+    this.update(show);
   }
 
   QuestionView.prototype.checkScrollPosition = function() {
+    var questionInstance = this.question;
     var scrollTop = this.ui.textField.get(0).scrollTop;
 
-    var show = (scrollTop == this.question.correctScrollPosition);
-    this.updateUI(show);
+    var show = (scrollTop == questionInstance.question.correctScrollPosition);
+    this.update(show);
   }
 
   QuestionView.prototype.checkContent = function() {
+    var questionInstance = this.question;
     var currentContent = this.ui.textField.get(0).value;
 
-    var show = (currentContent == this.question.correctValue);
-    this.updateUI(show);
+    var show = (currentContent == questionInstance.question.correctValue);
+    this.update(show);
   }
 
   initApp();
