@@ -1,11 +1,9 @@
 (function() {
   var questions = [];
-  var appView = null;
-  var questionView = null;
 
   function initApp() {
     initQuestions();
-    appView = new AppView($('.app-container'));
+    new AppView($('.app-container'));
   }
 
   function BaseQuestion(q) {
@@ -247,6 +245,8 @@
   AppView.prototype.template = "appTemplate";
 
   AppView.prototype.onStateChange = function(show, callback) {
+    var that = this;
+
     var moreQuestionsExist = (questions[this.currentQuestionIndex + 1] !== undefined);
     // show = true, moreQuestionsExist = true
       // false || false => false => visible
@@ -257,12 +257,15 @@
     // show = false, moreQuestionsExist = false
       // true || true => hidden
     this.ui.nextQuestion.get(0).disabled = (!show || !moreQuestionsExist);
-
     if (show) {
       if (!moreQuestionsExist) {
         this.ui.complete.toggleClass("hidden", false);
       } else {
-        if (callback) callback(this); // pass the AppView to the callback so we can call events on it later, probably bad practice
+        if (callback) {
+          callback(function() {
+            that.ui.nextQuestion.click();
+          });
+        }
       }
     }
   }
@@ -278,7 +281,7 @@
     var that = this;
 
     if (questions.length) {
-      questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onStateChange.bind(this));
+      var questionView = new QuestionView($('#questions'), questions[this.currentQuestionIndex], this.onStateChange.bind(this));
 
       this.ui.prevQuestion.on("click", function() {
         if (that.currentQuestionIndex > 0) {
@@ -355,26 +358,27 @@
     var that = this;
     this.ui.correct.toggleClass("hidden", !show);
 
-    this.onStateChange(show, function(app) {
-      // executed by onStateChange on the AppView
-      // add an ENTER key press event to trigger next question
-      if (show) {
-        var existingEvents = $._data(that.ui.textField.get(0), "events");
+    var setupEnterHandler = function(goToNextQuestion) {
+      // onStateChange in AppView calls this callback function that we specified so that we can set up ENTER handler
+      var existingEvents = $._data(that.ui.textField.get(0), "events");
 
-        if (existingEvents.keypress === undefined) {
-          // if user gets correct answer and interacts with textfield in any other way than ENTER, it would be adding
-          // the handler twice, hence why we only add it if it doesn't already existingEvents
-          // when new question is loaded, textField is re-rendered so events are lost
-          that.ui.textField.on("keypress", function (event) {
-            if ((event.keyCode || event.which) == 13) {
-              app.ui.nextQuestion.click();
-              event.preventDefault();
-              return false;
-            }
-          });
-        }
+      if (typeof existingEvents.keypress === 'undefined') {
+        // if user gets correct answer and interacts with textfield in any other way than ENTER, it would be adding
+        // the handler twice, hence why we only add it if it doesn't already existingEvents
+        // when new question is loaded, textField is re-rendered so events are lost
+        that.ui.textField.on("keypress", function(event) {
+          if ((event.keyCode || event.which) == 13) {
+            // onStateChange in AppView passes in this callback function so that we can call the CLICK event
+            // TODO: AppView shouldn't know what to pass to our callback.
+            goToNextQuestion();
+            event.preventDefault();
+            return false;
+          }
+        });
       }
-    });
+    }
+
+    this.onStateChange(show, setupEnterHandler);
   }
 
   QuestionView.prototype.checkCursorPosition = function() {
